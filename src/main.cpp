@@ -26,7 +26,7 @@ bool is_png_file(FILE *fp)
         fprintf(stderr, "Could not read the file header (%d bytes)\n", PNG_HEADER_SIZE);
         return false;
     }
-    
+
     bool has_png_header = !png_sig_cmp(header, 0, PNG_HEADER_SIZE);
 
     delete[] header;
@@ -42,20 +42,24 @@ bool init_libpng(FILE *fp, png_structp& png_ptr, png_infop& info_ptr)
         return false;
     }
 
+    // Move FILE position to after the header
+    fseek(fp, PNG_HEADER_SIZE, SEEK_SET);
+    // Tell libpng we already read the header
+    png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
+
     png_init_io(png_ptr, fp);
-    png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE); // Tell libpng we already checked for the header.
     png_read_info(png_ptr, info_ptr);
     return true;
 }
 
 bool read_png(
-    png_structp& png_ptr, 
+    png_structp& png_ptr,
     png_infop& info_ptr,
-    png_bytepp& row_pointers, 
-    png_uint_32& stride, 
-    png_uint_32& width, 
-    png_uint_32& height, 
-    int& bit_depth, 
+    png_bytepp& row_pointers,
+    png_uint_32& stride,
+    png_uint_32& width,
+    png_uint_32& height,
+    int& bit_depth,
     int& color_type)
 {
     // Setup libpng error long jump destination
@@ -76,19 +80,19 @@ bool read_png(
     for (png_uint_32 y = 0; y < height; ++y) {
         row_pointers[y] = new png_byte[stride];
     }
-    
+
     // Read image
     png_read_image(png_ptr, row_pointers);
     return true;
 }
 
 bool load_png(
-    FILE *fp, 
-    png_bytepp& row_pointers, 
+    FILE *fp,
+    png_bytepp& row_pointers,
     png_uint_32& stride,
-    png_uint_32& width, 
-    png_uint_32& height, 
-    int& bit_depth, 
+    png_uint_32& width,
+    png_uint_32& height,
+    int& bit_depth,
     int& color_type) 
 {
     // Check for png header
@@ -96,7 +100,7 @@ bool load_png(
         fprintf(stderr, "File header does not match PNG header.\n");
         return false;
     }
-    
+
     // Create libpng state structs
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr) {
