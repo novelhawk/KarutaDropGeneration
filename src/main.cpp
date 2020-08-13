@@ -4,6 +4,8 @@
 #include <webp/encode.h>
 #include <png.h>
 
+constexpr int PNG_HEADER_SIZE = 8;
+
 constexpr int SOURCE_CARD_WIDTH = 274;
 constexpr int SOURCE_CARD_HEIGHT = 400;
 constexpr int SOURCE_CARD_BIT_DEPTH = 8;
@@ -15,22 +17,91 @@ constexpr int OUTPUT_BOTTOM_PADDING = 2;
 constexpr int OUTPUT_HEIGHT = OUTPUT_TOP_PADDING + SOURCE_CARD_HEIGHT + OUTPUT_BOTTOM_PADDING;
 constexpr float OUTPUT_QUALITY = 80;
 
-bool read_png(FILE *fp, png_bytepp& row_pointers, png_uint_32& stride, png_uint_32& width, png_uint_32& height, int& bit_depth, int& color_type) 
+bool is_png_file(FILE *fp)
 {
-    const int bytes_to_check = 8;
-    uint8_t *header = new uint8_t[bytes_to_check];
+    uint8_t *header = new uint8_t[PNG_HEADER_SIZE];
 
-    if (fread(header, 1, bytes_to_check, fp) != bytes_to_check) {
-        fprintf(stderr, "Could not read the file header (8 bytes)\n");
+    int read_bytes = fread(header, 1, PNG_HEADER_SIZE, fp);
+    if (read_bytes != PNG_HEADER_SIZE) {
+        fprintf(stderr, "Could not read the file header (%d bytes)\n", PNG_HEADER_SIZE);
         return false;
     }
-    if (png_sig_cmp(header, 0, bytes_to_check)) {
+
+    bool has_png_header = !png_sig_cmp(header, 0, PNG_HEADER_SIZE);
+
+    delete[] header;
+
+    return has_png_header;
+}
+
+bool init_libpng(FILE *fp, png_structp& png_ptr, png_infop& info_ptr)
+{
+    // Setup libpng error long jump destination
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        fprintf(stderr, "Failed initializing libpng.\n");
+        return false;
+    }
+
+    // Move FILE position to after the header
+    fseek(fp, PNG_HEADER_SIZE, SEEK_SET);
+    // Tell libpng we already read the header
+    png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
+
+    png_init_io(png_ptr, fp);
+    png_read_info(png_ptr, info_ptr);
+    return true;
+}
+
+bool read_png(
+    png_structp& png_ptr,
+    png_infop& info_ptr,
+    png_bytepp& row_pointers,
+    png_uint_32& stride,
+    png_uint_32& width,
+    png_uint_32& height,
+    int& bit_depth,
+    int& color_type)
+{
+    // Setup libpng error long jump destination
+    if (setjmp(png_jmpbuf(png_ptr))) {
+        fprintf(stderr, "Failed to read image data.\n");
+        return false;
+    }
+
+    // Gets image informations from IHDR block
+    if (!png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL)) {
+        fprintf(stderr, "Failed to read IHDR chunk.\n");
+        return false;
+    }
+
+    // Setup destination buffers
+    row_pointers = new png_bytep[height];
+    stride = png_get_rowbytes(png_ptr, info_ptr);
+    for (png_uint_32 y = 0; y < height; ++y) {
+        row_pointers[y] = new png_byte[stride];
+    }
+
+    // Read image
+    png_read_image(png_ptr, row_pointers);
+    return true;
+}
+
+bool load_png(
+    FILE *fp,
+    png_bytepp& row_pointers,
+    png_uint_32& stride,
+    png_uint_32& width,
+    png_uint_32& height,
+    int& bit_depth,
+    int& color_type) 
+{
+    // Check for png header
+    if (!is_png_file) {
         fprintf(stderr, "File header does not match PNG header.\n");
         return false;
     }
 
-    delete[] header;
-   
+    // Create libpng state structs
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr) {
         fprintf(stderr, "Failed to allocate png struct.\n");
@@ -44,33 +115,17 @@ bool read_png(FILE *fp, png_bytepp& row_pointers, png_uint_32& stride, png_uint_
         return false;
     }
 
-    if (setjmp(png_jmpbuf(png_ptr))) {
-        fprintf(stderr, "Failed initializing libpng.\n");
+    // Init libpng
+    if (!init_libpng(fp, png_ptr, info_ptr)) {
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return false;
     }
 
-    png_init_io(png_ptr, fp);
-    png_set_sig_bytes(png_ptr, bytes_to_check);
-    png_read_info(png_ptr, info_ptr);
-
-    if (!png_get_IHDR(png_ptr, info_ptr, &width, &height, &bit_depth, &color_type, NULL, NULL, NULL)) {
-        fprintf(stderr, "Failed to read IHDR chunk.\n");
-        return false;
-    }
-
-    if (setjmp(png_jmpbuf(png_ptr))) {
-        fprintf(stderr, "Failed to read image data.\n");
+    // Read image
+    if (!read_png(png_ptr, info_ptr, row_pointers, stride, width, height, bit_depth, color_type)) {
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return false;
     }
-
-    row_pointers = new png_bytep[height];
-    stride = png_get_rowbytes(png_ptr, info_ptr);
-    for (png_uint_32 y = 0; y < height; ++y) {
-        row_pointers[y] = new png_byte[stride];
-    }
-    png_read_image(png_ptr, row_pointers);
 
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
     return true;
@@ -86,7 +141,7 @@ void read_card(const char* path, png_bytepp& row_pointers, png_uint_32& stride, 
 
     png_uint_32 width;
     int bit_depth, color_type;
-    if (!read_png(fp, row_pointers, stride, width, height, bit_depth, color_type)) {
+    if (!load_png(fp, row_pointers, stride, width, height, bit_depth, color_type)) {
         fprintf(stderr, "Failed to read png image. Aborting.\n");
         fclose(fp);
         abort();
