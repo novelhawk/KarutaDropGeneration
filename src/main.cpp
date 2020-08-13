@@ -12,7 +12,7 @@ constexpr int SOURCE_CARD_COLOR_TYPE = PNG_COLOR_TYPE_RGB_ALPHA;
 constexpr int OUTPUT_TOP_PADDING = 12;
 constexpr int OUTPUT_SIDE_PADDING = 7;
 constexpr int OUTPUT_BOTTOM_PADDING = 2;
-constexpr int OUTPUT_TARGET_HEIGHT = OUTPUT_TOP_PADDING + SOURCE_CARD_HEIGHT + OUTPUT_BOTTOM_PADDING;
+constexpr int OUTPUT_HEIGHT = OUTPUT_TOP_PADDING + SOURCE_CARD_HEIGHT + OUTPUT_BOTTOM_PADDING;
 constexpr float OUTPUT_QUALITY = 80;
 
 bool read_png(FILE *fp, png_bytepp& row_pointers, png_uint_32& stride, png_uint_32& width, png_uint_32& height, int& bit_depth, int& color_type) 
@@ -114,29 +114,29 @@ void read_card(const char* path, png_bytepp& row_pointers, png_uint_32& stride, 
     }
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char **argv) 
 {
-    argc = argc - 1;
-    argv = argv + 1;
+    int number_of_cards = argc - 1;
+    char **card_paths = argv + 1;
 
-    if (argc == 0) {
+    if (number_of_cards == 0) {
         fprintf(stderr, "Invalid number of arguments supplied.\n");
         return 1;
     }
 
-    int output_width = SOURCE_CARD_WIDTH * argc + 2 * OUTPUT_SIDE_PADDING;
-    int raw_output_stride = output_width * 4;
-    uint8_t *raw_output_image = new uint8_t[OUTPUT_TARGET_HEIGHT * raw_output_stride]();
+    int output_width = SOURCE_CARD_WIDTH * number_of_cards + 2 * OUTPUT_SIDE_PADDING;
+    int output_stride = output_width * 4;
+    uint8_t *raw_output_image = new uint8_t[OUTPUT_HEIGHT * output_stride]();
 
-    for (int i = 0; i < argc; i++) {
+    for (int i = 0; i < number_of_cards; i++) {
         png_bytepp row_pointers;
         png_uint_32 card_stride, height;
-        read_card(argv[i], row_pointers, card_stride, height);
+        read_card(card_paths[i], row_pointers, card_stride, height);
 
         for (png_uint_32 y = 0; y < height; ++y) {
             int out_x = OUTPUT_SIDE_PADDING + i * SOURCE_CARD_WIDTH;
             int out_y = OUTPUT_TOP_PADDING + y;
-            memcpy(&raw_output_image[out_x * 4 + out_y * raw_output_stride], row_pointers[y], card_stride);
+            memcpy(&raw_output_image[out_x * 4 + out_y * output_stride], row_pointers[y], card_stride);
         }
 
         for (png_uint_32 y = 0; y < height; ++y) {
@@ -145,24 +145,23 @@ int main(int argc, char *argv[])
         delete[] row_pointers;
     }
     
-    uint8_t *output;
+    uint8_t *webp_output;
 
-
-    size_t webp_size = WebPEncodeRGBA(raw_output_image, output_width, OUTPUT_TARGET_HEIGHT, raw_output_stride, OUTPUT_QUALITY, &output);
+    size_t webp_size = WebPEncodeRGBA(raw_output_image, output_width, OUTPUT_HEIGHT, output_stride, OUTPUT_QUALITY, &webp_output);
     
-    FILE *out_file = fopen("../project/output.webp", "w");
+    FILE *out_file = fopen("output.webp", "w");
     if (!out_file) {
         fprintf(stderr, "Failed to create output.webp\n");
         return 1;
     }
-    int wrote_bytes = fwrite(output, sizeof(uint8_t), webp_size, out_file);
+    int wrote_bytes = fwrite(webp_output, sizeof(uint8_t), webp_size, out_file);
     if (wrote_bytes != webp_size) {
         fprintf(stderr, "Failed to write image data to output.webp\n");
         return 1;
     }
     fclose(out_file);
     
-    WebPFree(output);
+    WebPFree(webp_output);
 
     delete[] raw_output_image;
 
