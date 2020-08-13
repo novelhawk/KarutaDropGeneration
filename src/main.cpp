@@ -4,19 +4,19 @@
 #include <webp/encode.h>
 #include <png.h>
 
-#define TOP_PADDING            (12)
-#define LEFT_RIGHT_PADDING     (7)
-#define BOTTOM_PADDING         (2)
+constexpr int TOP_PADDING = 12;
+constexpr int LEFT_RIGHT_PADDING = 7;
+constexpr int BOTTOM_PADDING = 2;
 
-#define SOURCE_CARD_WIDTH      (274)
-#define SOURCE_CARD_HEIGHT     (400)
-#define SOURCE_CARD_BIT_DEPTH  (8)
-#define SOURCE_CARD_COLOR_TYPE (PNG_COLOR_TYPE_RGB_ALPHA)
+constexpr int SOURCE_CARD_WIDTH = 274;
+constexpr int SOURCE_CARD_HEIGHT = 400;
+constexpr int SOURCE_CARD_BIT_DEPTH = 8;
+constexpr int SOURCE_CARD_COLOR_TYPE = PNG_COLOR_TYPE_RGB_ALPHA;
 
-#define OUTPUT_TARGET_WIDTH    (SOURCE_CARD_WIDTH * 3 + LEFT_RIGHT_PADDING * 2)
-#define OUTPUT_TARGET_HEIGHT   (SOURCE_CARD_HEIGHT + TOP_PADDING + BOTTOM_PADDING)
+constexpr int OUTPUT_TARGET_WIDTH = SOURCE_CARD_WIDTH * 3 + LEFT_RIGHT_PADDING * 2;
+constexpr int OUTPUT_TARGET_HEIGHT = SOURCE_CARD_HEIGHT + TOP_PADDING + BOTTOM_PADDING;
 
-#define OUTPUT_QUALITY         (80)
+constexpr float OUTPUT_QUALITY = 80;
 
 bool read_png(FILE *fp, png_bytepp& row_pointers, png_uint_32& stride, png_uint_32& width, png_uint_32& height, int& bit_depth, int& color_type) 
 {
@@ -117,7 +117,6 @@ void read_card(const char* path, png_bytepp& row_pointers, png_uint_32& stride, 
     }
 }
 
-
 int main(int argc, char *argv[]) 
 {
     argc = argc - 1;
@@ -128,8 +127,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    int output_stride = OUTPUT_TARGET_WIDTH * 4;
-    uint8_t *output_image = new uint8_t[OUTPUT_TARGET_HEIGHT * output_stride]();
+    int raw_output_stride = OUTPUT_TARGET_WIDTH * 4;
+    uint8_t *raw_output_image = new uint8_t[OUTPUT_TARGET_HEIGHT * raw_output_stride]();
 
     for (int i = 0; i < argc; i++) {
         png_bytepp row_pointers;
@@ -139,7 +138,7 @@ int main(int argc, char *argv[])
         for (png_uint_32 y = 0; y < height; ++y) {
             int out_x = LEFT_RIGHT_PADDING + i * SOURCE_CARD_WIDTH;
             int out_y = TOP_PADDING + y;
-            memcpy(&output_image[out_x * 4 + out_y * output_stride], row_pointers[y], card_stride);
+            memcpy(&raw_output_image[out_x * 4 + out_y * raw_output_stride], row_pointers[y], card_stride);
         }
 
         for (png_uint_32 y = 0; y < height; ++y) {
@@ -151,7 +150,7 @@ int main(int argc, char *argv[])
     uint8_t *output;
 
 
-    size_t webp_size = WebPEncodeRGBA(output_image, OUTPUT_TARGET_WIDTH, OUTPUT_TARGET_HEIGHT, output_stride, OUTPUT_QUALITY, &output);
+    size_t webp_size = WebPEncodeRGBA(raw_output_image, OUTPUT_TARGET_WIDTH, OUTPUT_TARGET_HEIGHT, raw_output_stride, OUTPUT_QUALITY, &output);
     
     FILE *out_file = fopen("output.webp", "w");
     if (!out_file) {
@@ -167,7 +166,7 @@ int main(int argc, char *argv[])
     
     WebPFree(output);
 
-    delete[] output_image;
+    delete[] raw_output_image;
 
     return 0;
 }
