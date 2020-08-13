@@ -1,12 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <webp/decode.h>
-#include <webp/demux.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <webp/encode.h>
-#include <webp/mux.h>
-#include <webp/mux_types.h>
-#include <webp/types.h>
 #include <png.h>
 
 #define TOP_PADDING            (12)
