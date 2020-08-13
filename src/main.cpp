@@ -17,6 +17,13 @@ constexpr int OUTPUT_BOTTOM_PADDING = 2;
 constexpr int OUTPUT_HEIGHT = OUTPUT_TOP_PADDING + SOURCE_CARD_HEIGHT + OUTPUT_BOTTOM_PADDING;
 constexpr float OUTPUT_QUALITY = 80;
 
+struct Rgba32 {
+    uint8_t red;
+    uint8_t gren;
+    uint8_t blue;
+    uint8_t alpha;
+};
+
 bool is_png_file(FILE *fp)
 {
     uint8_t *header = new uint8_t[PNG_HEADER_SIZE];
@@ -180,18 +187,18 @@ int main(int argc, char **argv)
     }
 
     int output_width = SOURCE_CARD_WIDTH * number_of_cards + 2 * OUTPUT_SIDE_PADDING;
-    int output_stride = output_width * 4;
-    uint8_t *raw_output_image = new uint8_t[OUTPUT_HEIGHT * output_stride]();
+    Rgba32 *raw_output_image = new Rgba32[OUTPUT_HEIGHT * output_width]();
 
     for (int i = 0; i < number_of_cards; i++) {
         png_bytepp row_pointers;
         png_uint_32 card_stride, height;
         read_card(card_paths[i], row_pointers, card_stride, height);
 
+        int card_offset = i * SOURCE_CARD_WIDTH;
         for (png_uint_32 y = 0; y < height; ++y) {
-            int out_x = OUTPUT_SIDE_PADDING + i * SOURCE_CARD_WIDTH;
+            int out_x = OUTPUT_SIDE_PADDING + card_offset;
             int out_y = OUTPUT_TOP_PADDING + y;
-            memcpy(&raw_output_image[out_x * 4 + out_y * output_stride], row_pointers[y], card_stride);
+            memcpy(&raw_output_image[out_x + out_y * output_width], row_pointers[y], card_stride);
         }
 
         for (png_uint_32 y = 0; y < height; ++y) {
@@ -201,20 +208,27 @@ int main(int argc, char **argv)
     }
     
     uint8_t *webp_output;
-
-    size_t webp_size = WebPEncodeRGBA(raw_output_image, output_width, OUTPUT_HEIGHT, output_stride, OUTPUT_QUALITY, &webp_output);
+    size_t webp_size = WebPEncodeRGBA(
+        (const uint8_t *)raw_output_image,
+        output_width,
+        OUTPUT_HEIGHT,
+        output_width * sizeof(Rgba32),
+        OUTPUT_QUALITY,
+        &webp_output);
     
-    FILE *out_file = fopen("output.webp", "w");
-    if (!out_file) {
-        fprintf(stderr, "Failed to create output.webp\n");
-        return 1;
+    {
+        FILE *out_file = fopen("output.webp", "w");
+        if (!out_file) {
+            fprintf(stderr, "Failed to create output.webp\n");
+            return 1;
+        }
+        int wrote_bytes = fwrite(webp_output, sizeof(uint8_t), webp_size, out_file);
+        if (wrote_bytes != webp_size) {
+            fprintf(stderr, "Failed to write image data to output.webp\n");
+            return 1;
+        }
+        fclose(out_file);
     }
-    int wrote_bytes = fwrite(webp_output, sizeof(uint8_t), webp_size, out_file);
-    if (wrote_bytes != webp_size) {
-        fprintf(stderr, "Failed to write image data to output.webp\n");
-        return 1;
-    }
-    fclose(out_file);
     
     WebPFree(webp_output);
 
