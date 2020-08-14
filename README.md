@@ -19,21 +19,22 @@ increasing file size, this can be achived using WebP.
 I got 3 cards using the `view` command in Karuta and created the drop image with those to check file
 sizes.
 
-| Image 1 | Image 2 | Image 3 |
+| Card 1 | Card 2 | Card 3 |
 | --- | --- | --- |
-| <a align=center>157263 B</a> | <a align=center>147534 B</a> | <a align=center>153572 B</a> |
+| 157263 B | 147534 B | 153572 B |
 | ![First card](.github/resources/input1.png) | ![Second card](.github/resources/input2.png) | ![Third card](.github/resources/input3.png) |
 
 The sum of the sizes of the 3 images is 458369 B, a random drop from the bot was 51373 B, the
 following are images creates with different quality options within WebP
 
-### Lossless WebP
+### Lossless
 
-| Test |
-| --- |
-| ![Lossless WebP image](.github/resources/output-lossless.webp) |
+![Lossless WebP image](.github/resources/output-lossless.webp)
 
+### Quality 80
 
-| Hello |
-| --- |
-| ![Quality 80 WebP image](.github/resources/output-q80.webp) |
+![Quality 80 WebP image](.github/resources/output-q80.webp)
+
+### Quality 50
+
+![Quality 50 WebP image](.github/resources/output-q50.webp)
