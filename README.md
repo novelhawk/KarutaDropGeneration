@@ -29,5 +29,9 @@ following are images creates with different quality options within WebP
 
 ### Lossless WebP
 
+| Test |
+| --- |
 | ![Lossless WebP image](.github/resources/output-lossless.webp) |
+| Hello |
+| --- |
 | ![Quality 80 WebP image](.github/resources/output-q80.webp) |
