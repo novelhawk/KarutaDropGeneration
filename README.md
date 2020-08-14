@@ -21,7 +21,7 @@ sizes.
 
 | Image 1 | Image 2 | Image 3 |
 | --- | --- | --- |
-| <center>157263 B</center> | <center>147534 B</center> | <center>153572 B</center> |
+| <a align=center>157263 B</a> | <a align=center>147534 B</a> | <a align=center>153572 B</a> |
 | ![First card](.github/resources/input1.png) | ![Second card](.github/resources/input2.png) | ![Third card](.github/resources/input3.png) |
 
 The sum of the sizes of the 3 images is 458369 B, a random drop from the bot was 51373 B, the
