@@ -41,3 +41,9 @@ following are images creates with different quality options within WebP
 | --- |
 | 29668 B |
 | ![Quality 50 WebP image](.github/resources/output-q50.webp) |
+
+So confronting the sizes:
+
+| JPEG | Lossless | Quality 80 | Quality 50 |
+| --- | --- | --- | --- |
+| 51373 B | 287540 B | 46990 B | 29668 B |
