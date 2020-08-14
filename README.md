@@ -4,9 +4,9 @@
 
 Karuta is a Discord bot that allows users to collect and trade cards. There are multiple ways to
 obtain cards one of which is by using the `drop` command which generates an image with some random
-cards for the user to choose. The image uses the jpeg format to reduce file size therefore
+cards for the user to choose. The image is in the jpeg format to reduce file size therefore
 transparency is not supported so the discord dark theme color is used as background to make it look
-like there is trasparency but the jpeg lossy compression creates weird artifacts around the corners
+like the image is transparent but the jpeg lossy compression creates weird artifacts around the corners
 of the cards making it look bad.
 
 ## Objective
@@ -26,5 +26,7 @@ sizes.
 
 The sum of the sizes of the 3 images is 458369 B, a random drop from the bot was 51373 B, the
 following are images creates with different quality options within WebP
+
+### Lossless WebP
 
 ![Lossless WebP image](.github/resources/output-lossless.webp)
