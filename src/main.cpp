@@ -59,15 +59,8 @@ bool init_libpng(FILE *fp, png_structp& png_ptr, png_infop& info_ptr)
     return true;
 }
 
-bool read_png(
-    png_structp& png_ptr,
-    png_infop& info_ptr,
-    png_bytepp& row_pointers,
-    png_uint_32& stride,
-    png_uint_32& width,
-    png_uint_32& height,
-    int& bit_depth,
-    int& color_type)
+bool read_png(png_structp& png_ptr, png_infop& info_ptr, png_bytepp& row_pointers, 
+    png_uint_32& stride, png_uint_32& width, png_uint_32& height, int& bit_depth, int& color_type)
 {
     // Setup libpng error long jump destination
     if (setjmp(png_jmpbuf(png_ptr))) {
@@ -93,14 +86,8 @@ bool read_png(
     return true;
 }
 
-bool load_png(
-    FILE *fp,
-    png_bytepp& row_pointers,
-    png_uint_32& stride,
-    png_uint_32& width,
-    png_uint_32& height,
-    int& bit_depth,
-    int& color_type) 
+bool load_png(FILE *fp, png_bytepp& row_pointers, png_uint_32& stride, png_uint_32& width, 
+    png_uint_32& height, int& bit_depth, int& color_type) 
 {
     // Check for png header
     if (!is_png_file) {
