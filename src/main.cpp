@@ -208,13 +208,8 @@ int main(int argc, char **argv)
     }
     
     uint8_t *webp_output;
-    size_t webp_size = WebPEncodeRGBA(
-        (const uint8_t *)raw_output_image,
-        output_width,
-        OUTPUT_HEIGHT,
-        output_width * sizeof(Rgba32),
-        OUTPUT_QUALITY,
-        &webp_output);
+    size_t webp_size = WebPEncodeRGBA((const uint8_t *)raw_output_image, output_width, 
+        OUTPUT_HEIGHT, output_width * sizeof(Rgba32), OUTPUT_QUALITY, &webp_output);
     
     {
         FILE *out_file = fopen("output.webp", "w");
