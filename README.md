@@ -24,26 +24,9 @@ sizes.
 | 157263 B | 147534 B | 153572 B |
 | ![First card](.github/resources/input1.png) | ![Second card](.github/resources/input2.png) | ![Third card](.github/resources/input3.png) |
 
-The sum of the sizes of the 3 images is 458369 B, a random drop from the bot was 51373 B, the
-following are images creates with different quality options within WebP
+The sum of the sizes of the 3 images is 458369 B, a random drop from the bot was 51373 B and the
+following are the comparison of the WebP qualities.
 
-| Lossless |
-| --- |
-| 287540 B |
-| ![Lossless WebP image](.github/resources/output-lossless.webp) |
-
-| Quality 80 |
-| --- |
-| 46990 B |
-| ![Quality 80 WebP image](.github/resources/output-q80.webp) |
-
-| Quality 50 |
-| --- |
-| 29668 B |
-| ![Quality 50 WebP image](.github/resources/output-q50.webp) |
-
-So confronting the sizes:
-
-| JPEG | Lossless | Quality 80 | Quality 50 |
+| JPEG | [Lossless](.github/resources/output-lossless.webp) | [Quality 80](.github/resources/output-q80.webp) | [Quality 50](.github/resources/output-q50.webp) |
 | --- | --- | --- | --- |
 | 51373 B | 287540 B | 46990 B | 29668 B |
