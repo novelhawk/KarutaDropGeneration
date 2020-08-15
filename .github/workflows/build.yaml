@@ -64,5 +64,5 @@ jobs:
         run: |
             mkdir build
             cd build
-            cmake -DCMAKE_WINDOWS ..
+            cmake -DCMAKE_WINDOWS=1 ..
         shell: cmd
