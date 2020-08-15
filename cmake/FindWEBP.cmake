@@ -30,30 +30,32 @@ The following cache variables may also be set:
   The path to the WebP library.
 ``WEBP_NAMES``
   The names of the WebP library.
+``WEBP_FIND_PATHS``
+  The paths to look within.
 
 #]=======================================================================]
 
-include(FindZLIB)
+if(PNG_FIND_QUIETLY)
+  set(_FIND_ZLIB_ARG QUIET)
+endif()
+find_package(ZLIB ${_FIND_ZLIB_ARG})
 
-find_path(WEBP_INCLUDE_DIR decode.h
-    HINTS ENV WEBP_DIR
-    PATH_SUFFIXES include/webp include webp
-    PATHS
+set(WEBP_FIND_PATHS ${WEBP_FIND_PATHS}
     /usr
     /usr/local
     ~/Library/Frameworks
     /Library/Frameworks)
+find_path(WEBP_INCLUDE_DIR decode.h
+    HINTS ENV WEBP_DIR
+    PATH_SUFFIXES include/webp include webp
+    PATHS ${WEBP_FIND_PATHS})
 
 set(WEBP_NAMES ${WEBP_NAMES} webp)    
 find_library(WEBP_LIBRARY
     NAMES ${WEBP_NAMES}
     HINTS ENV WEBP_DIR
     PATH_SUFFIXES lib
-    PATHS
-    /usr/local
-    /usr
-    ~/Library/Frameworks
-    /Library/Frameworks)
+    PATHS ${WEBP_FIND_PATHS})
 
 if (WEBP_LIBRARY AND WEBP_INCLUDE_DIR)
   set(WEBP_INCLUDE_DIRS "${WEBP_INCLUDE_DIR}")
@@ -71,4 +73,4 @@ else (WEBP_FOUND)
   endif (WEBP_FIND_REQUIRED)
 endif (WEBP_FOUND)
 
-mark_as_advanced(WEBP_INCLUDE_DIR WEBP_LIBRARY WEBP_NAMES)
+mark_as_advanced(WEBP_INCLUDE_DIR WEBP_LIBRARY WEBP_NAMES WEBP_FIND_PATHS)

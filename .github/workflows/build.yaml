@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
       fail-fast: false
     
     steps:
@@ -35,3 +35,33 @@ jobs:
             cmake ..
             make -j8
         shell: bash
+
+      - name: Install Dependencies (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+            $client = [System.Net.WebClient]::new()
+
+            $libpng_version = '1.2.37'
+            $libpng_url = "https://deac-ams.dl.sourceforge.net/project/gnuwin32/libpng/$libpng_version/libpng-$libpng_version-lib.zip"
+            $output = 'windows-libpng.zip'
+
+            echo "Downloading libpng version $libpng_version"
+            $client.DownloadFile($libpng_url, $output)
+            Expand-Archive -Path $output -DestinationPath libpng
+
+            $libwebp_version = '1.1.0'
+            $libwebp_url = "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-$libwebp_version-windows-x64.zip"
+            $output = 'windows-libwebp.zip'
+
+            echo "Downloading libwebp version $libwebp_version"
+            $client.DownloadFile($libwebp_url, $output)
+            Expand-Archive -Path $output -DestinationPath .
+            Move libwebp-1.1.0-windows-x64 libwebp
+        shell: powershell
+
+      - name: Build (Windows)
+        if: startsWith(matrix.os, 'windows')
+        run: |
+            mkdir build
+            cd build
+            cmake ..
