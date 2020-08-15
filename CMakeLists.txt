@@ -16,15 +16,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(drop src/main.cpp)
 
 # Dependencies
-if (EXISTS ${CMAKE_SOURCE_DIR}/libpng)
-    set(_LIBPNG_FIND_ARGS PATHS ${CMAKE_SOURCE_DIR}/libpng)
+if (NOT DEFINED CMAKE_WINDOWS)
+    find_package(PNG REQUIRED)
+    include_directories(PNG_INCLUDE_DIRS)
+    target_link_libraries(drop LINK_PUBLIC ${PNG_LIBRARIES})
+
+    find_package(WEBP REQUIRED)
+    include_directories(WEBP_INCLUDE_DIRS)
+    target_link_libraries(drop LINK_PUBLIC ${WEBP_LIBRARIES})
+else()
+    include_directories(./libpng/include/libpng12)
+    target_link_libraries(drop LINK_PUBLIC ./libpng/lib/libpng.lib)
+
+    include_directories(./libwebp/include/webp)
+    target_link_libraries(./libwebp/lib/libwebp.lib)
 endif()
-
-find_package(PNG REQUIRED)
-include_directories(PNG_INCLUDE_DIRS)
-target_link_libraries(drop LINK_PUBLIC ${PNG_LIBRARIES} ${_LIBPNG_FIND_ARGS})
-
-set(WEBP_FIND_PATHS ${CMAKE_CURRENT_SOURCE_DIR}/libwebp)
-find_package(WEBP REQUIRED)
-include_directories(WEBP_INCLUDE_DIRS)
-target_link_libraries(drop LINK_PUBLIC ${WEBP_LIBRARIES})
