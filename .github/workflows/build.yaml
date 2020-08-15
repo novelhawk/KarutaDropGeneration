@@ -1,0 +1,31 @@
+name: Build
+
+on:
+  push:
+    paths-ignore:
+      - '*.md'
+  pull_request:
+    paths-ignore:
+      - '*.md'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+      fail-fast: false
+    
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+      
+      - name: Build (Ubuntu)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+            mkdir build
+            cd build
+            cmake ..
+            make -j8
+        shell: bash
