@@ -69,8 +69,6 @@ int init_libpng(FILE *fp, png_structp png_ptr, png_infop info_ptr)
         return 0;
     }
 
-    // Move FILE position to after the header
-    fseek(fp, PNG_HEADER_SIZE, SEEK_SET);
     // Tell libpng we already read the header
     png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
 
