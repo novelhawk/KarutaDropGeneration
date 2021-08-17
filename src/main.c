@@ -296,11 +296,13 @@ void save_binary(char *path, uint8_t *data, size_t size)
 
 int main(int argc, char *argv[])
 {
-    int cards = argc - 1;
-    if (cards == 0) {
-        fprintf(stderr, "Usage: %s [png images...]\n", argv[0]);
+    if (argc < 3) {
+        fprintf(stderr, "Usage: %s [output image] [png images...]\n", argv[0]);
         return USER_ERROR;
     }
+
+    int cards = argc - 2;
+    char *output_path = argv[1];
 
     // Compute the output image width
     int output_width = SOURCE_CARD_WIDTH * cards + 2 * OUTPUT_SIDE_PADDING;
@@ -311,16 +313,16 @@ int main(int argc, char *argv[])
     rgba32_t *raw_output = (rgba32_t *) calloc(OUTPUT_HEIGHT * output_width, sizeof(rgba32_t));
 
     // Copy the input cards inside the output image
-    copy_cards_to_output(cards, argv + 1, raw_output, output_width);
+    copy_cards_to_output(cards, argv + 2, raw_output, output_width);
 
     // Encode raw data with WebP
     uint8_t *webp_output;
     size_t webp_size = WebPEncodeRGBA((const uint8_t *)raw_output, output_width, OUTPUT_HEIGHT, output_width * sizeof(rgba32_t), OUTPUT_QUALITY, &webp_output);
 
     // Save WebP image to output.webp
-    save_binary("output.webp", webp_output, webp_size);
+    save_binary(output_path, webp_output, webp_size);
 
-    printf("Saved output.webp\n");
+    printf("Saved file to '%s'\n", output_path);
     
     // Free WebP buffers
     WebPFree(webp_output);
