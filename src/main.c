@@ -47,7 +47,7 @@ int is_png_file(FILE *fp)
     uint8_t *header = (uint8_t *) malloc(PNG_HEADER_SIZE);
 
     if (!header) {
-        fprintf(stderr, "Out of memory: Couldn't allocate %d bytes", PNG_HEADER_SIZE);
+        fprintf(stderr, "Out of memory: Couldn't allocate %d bytes\n", PNG_HEADER_SIZE);
         exit(OUT_OF_RAM);
     }
 
@@ -71,7 +71,7 @@ int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *row_pointers, 
         return 0;
     }
 
-    // Gets image informations from IHDR block
+    // Fetch IHDR information from the info_ptr struct
     int successful = png_get_IHDR(
         png_ptr,
         info_ptr,
@@ -85,6 +85,12 @@ int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *row_pointers, 
 
     if (!successful) {
         fprintf(stderr, "Failed to read IHDR chunk.\n");
+        return 0;
+    }
+
+    // Fail if the image is interlaced
+    if (image_info->interlace_method != 0) {
+        fprintf(stderr, "This program does not support interlaced images\n");
         return 0;
     }
 
@@ -150,13 +156,12 @@ int load_png(FILE *fp, png_bytepp *row_pointers, image_info_t *image_info)
 
     // Update error handler to destroy info struct as well
     if (PNG_ERROR_HANDLER(png_ptr)) {
-        fprintf(stderr, "Failed to initialize libpng\n");
+        fprintf(stderr, "Failed to process image header\n");
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return 0;
     }
 
-    // Tell libpng that we created the read info struct and
-    // link it to the read context
+    // Read all chunks preceding the image data
     png_read_info(png_ptr, info_ptr);
 
     // Read image
@@ -174,27 +179,32 @@ int valid_source_card(image_info_t *info)
     int valid = 1;
 
     if (info->width != SOURCE_CARD_WIDTH) {
-        fprintf(stderr, "Invalid input card width: Expected %d Found %d\n", SOURCE_CARD_WIDTH, info->width);
+        fprintf(stderr, "Card '%s' has invalid width: Expected %d Found %d\n",
+            info->path, SOURCE_CARD_WIDTH, info->width);
         valid = 0;
     }
 
     if (info->height != SOURCE_CARD_HEIGHT) {
-        fprintf(stderr, "Invalid input card height: Expected %d Found %d\n", SOURCE_CARD_HEIGHT, info->height);
+        fprintf(stderr, "Card '%s' has invalid height: Expected %d Found %d\n",
+            info->path, SOURCE_CARD_HEIGHT, info->height);
         valid = 0;
     }
 
     if (info->color_type != SOURCE_CARD_COLOR_TYPE) {
-        fprintf(stderr, "Invalid input card color type: Expected %d Found %d\n", SOURCE_CARD_COLOR_TYPE, info->color_type);
+        fprintf(stderr, "Card '%s' has invalid color type: Expected %d Found %d\n",
+            info->path, SOURCE_CARD_COLOR_TYPE, info->color_type);
         valid = 0;
     }
 
     if (info->bit_depth != SOURCE_CARD_BIT_DEPTH) {
-        fprintf(stderr, "Invalid input card bit depth: Expected %d Found %d\n", SOURCE_CARD_BIT_DEPTH, info->bit_depth);
+        fprintf(stderr, "Card '%s' has invalid bit depth: Expected %d Found %d\n",
+            info->path, SOURCE_CARD_BIT_DEPTH, info->bit_depth);
         valid = 0;
     }
 
     if (info->stride != SOURCE_CARD_STRIDE) {
-        fprintf(stderr, "Invalid input card stride: Expected %d Found %d\n", SOURCE_CARD_STRIDE, info->stride);
+        fprintf(stderr, "Card '%s' has invalid stride: Expected %d Found %d\n",
+            info->path, SOURCE_CARD_STRIDE, info->stride);
         valid = 0;
     }
 
@@ -282,7 +292,7 @@ int main(int argc, char *argv[])
 {
     int cards = argc - 1;
     if (cards == 0) {
-        fprintf(stderr, "Usage: %s [png images...]", argv[0]);
+        fprintf(stderr, "Usage: %s [png images...]\n", argv[0]);
         return USER_ERROR;
     }
 
@@ -304,7 +314,7 @@ int main(int argc, char *argv[])
     // Save WebP image to output.webp
     save_binary("output.webp", webp_output, webp_size);
 
-    puts("Saved output.webp");
+    printf("Saved output.webp\n");
     
     // Free WebP buffers
     WebPFree(webp_output);
