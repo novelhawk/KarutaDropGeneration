@@ -240,15 +240,6 @@ void read_card(image_info_t *image_info, png_bytepp *rows)
     fclose(fp);
 }
 
-void destroy_card(png_bytepp row_pointers, image_info_t *image_info)
-{
-    // Free the image data
-    free(row_pointers[0]);
-
-    // Free the image row pointers
-    free(row_pointers);
-}
-
 void copy_cards_to_output(int cards, char **paths, rgba32_t *output, int output_width) {
     // Leave left and top padding in the output image
     output += OUTPUT_SIDE_PADDING + OUTPUT_TOP_PADDING * output_width;
@@ -278,8 +269,11 @@ void copy_cards_to_output(int cards, char **paths, rgba32_t *output, int output_
         // for the next iteration
         output += SOURCE_CARD_WIDTH;
 
-        // Free memory
-        destroy_card(card_rows, &card_info);
+        // Free the image data
+        free(row_pointers[0]);
+
+        // Free the image row pointers
+        free(row_pointers);
     }
 }
 
