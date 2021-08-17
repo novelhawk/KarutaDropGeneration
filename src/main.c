@@ -21,6 +21,8 @@
 #define OUT_OF_RAM (2)
 #define USER_ERROR (3)
 
+#define PNG_ERROR_HANDLER(ptr) (setjmp(png_jmpbuf(ptr)))
+
 typedef struct {
     uint8_t red;
     uint8_t green;
@@ -61,26 +63,11 @@ int is_png_file(FILE *fp)
     return has_png_header;
 }
 
-int init_libpng(FILE *fp, png_structp png_ptr, png_infop info_ptr)
-{
-    // Setup libpng error long jump destination
-    if (setjmp(png_jmpbuf(png_ptr))) {
-        fprintf(stderr, "Failed to initialize libpng\n");
-        return 0;
-    }
-
-    // Tell libpng we already read the header
-    png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
-
-    png_init_io(png_ptr, fp);
-    png_read_info(png_ptr, info_ptr);
-    return 1;
-}
-
 int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *rows, image_info_t *image_info) {
     // Setup libpng error long jump destination
-    if (setjmp(png_jmpbuf(png_ptr))) {
+    if (PNG_ERROR_HANDLER(png_ptr)) {
         fprintf(stderr, "Failed to read image data.\n");
+        // libpng structs are destroyed by the caller
         return 0;
     }
 
@@ -123,13 +110,28 @@ int load_png(FILE *fp, png_bytepp *rows, image_info_t *image_info)
         return 0;
     }
 
-    // Create libpng state structs
+    // Create libpng read struct
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_ptr) {
         fprintf(stderr, "Failed to allocate png struct.\n");
         return 0;
     }
 
+    // Handle initialization errors with libpng
+    if (PNG_ERROR_HANDLER(png_ptr)) {
+        fprintf(stderr, "Failed to initialize libpng\n");
+        png_destroy_read_struct(&png_ptr, NULL, NULL);
+        return 0;
+    }
+
+    // Tell libpng which file we are reading
+    png_init_io(png_ptr, fp);
+
+    // Tell libpng that is_png_file has already read the first
+    // PNG_HEADER_SIDE bytes of the header
+    png_set_sig_bytes(png_ptr, PNG_HEADER_SIZE);
+
+    // Create libpng info struct
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr) {
         fprintf(stderr, "Failed to allocate png info struct.\n");
@@ -137,11 +139,16 @@ int load_png(FILE *fp, png_bytepp *rows, image_info_t *image_info)
         return 0;
     }
 
-    // Init libpng
-    if (!init_libpng(fp, png_ptr, info_ptr)) {
+    // Update error handler to destroy info struct as well
+    if (PNG_ERROR_HANDLER(png_ptr)) {
+        fprintf(stderr, "Failed to initialize libpng\n");
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return 0;
     }
+
+    // Tell libpng that we created the read info struct and
+    // link it to the read context
+    png_read_info(png_ptr, info_ptr);
 
     // Read image
     if (!read_png(png_ptr, info_ptr, rows, image_info)) {
