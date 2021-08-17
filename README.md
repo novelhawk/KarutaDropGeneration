@@ -39,3 +39,10 @@ have to compare a drop of different cards making the comparison imprecise.
 | Random JPEG drop | [WebP Lossless](.github/resources/output-lossless.webp) | [WebP Quality 80](.github/resources/output-q80.webp) | [WebP Quality 50](.github/resources/output-q50.webp) |
 | --- | --- | --- | --- |
 | 51373 B | 287540 B | 46990 B | 29668 B |
+
+## License
+
+This project is licensed under the MIT license (refer to
+[the LICENSE file](LICENSE)) but the files `.github/resources/input{1,2,3}.png`
+are licensed to Karuta Bot and are not subject to the aforementioned LICENSE.
+Those are included in this repository for reference and research purpose only.
