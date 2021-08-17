@@ -3,4 +3,4 @@ CFLAGS=`pkg-config --cflags $(PKGS)`
 LIBS=`pkg-config --libs $(PKGS)`
 
 drop: src/main.cpp
-	$(CXX) ./src/main.cpp $(CFLAGS) $(LIBS) -o drop
+	$(CC) ./src/main.c $(CFLAGS) $(LIBS) -o drop
