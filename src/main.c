@@ -63,7 +63,7 @@ int is_png_file(FILE *fp)
     return has_png_header;
 }
 
-int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *rows, image_info_t *image_info) {
+int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *row_pointers, image_info_t *image_info) {
     // Setup libpng error long jump destination
     if (PNG_ERROR_HANDLER(png_ptr)) {
         fprintf(stderr, "Failed to read image data.\n");
@@ -91,18 +91,27 @@ int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *rows, image_in
     // Get number of bytes in each row
     image_info->stride = png_get_rowbytes(png_ptr, info_ptr);
 
-    // Setup destination buffers
-    *rows = (png_bytepp) malloc(image_info->height * sizeof(png_bytep));
+    // Allocate a buffer to store the raw image
+    png_bytep data_buffer = (png_bytep) malloc(image_info->height * image_info->stride * sizeof(png_byte));
+
+    // Allocate a second buffer to store the pointers to the start of each row.
+    // This is required by libpng png_read_image function.
+    png_bytepp rows = (png_bytepp) malloc(image_info->height * sizeof(png_bytep));
+
+    // Set each row pointer to the first byte of each row
     for (png_uint_32 row = 0; row < image_info->height; ++row) {
-        (*rows)[row] = (png_bytep) malloc(image_info->stride * sizeof(png_byte));
+        rows[row] = data_buffer + image_info->stride * row;
     }
 
-    // Read image
-    png_read_image(png_ptr, *rows);
+    // Read the image
+    png_read_image(png_ptr, rows);
+
+    // Return the array to the caller
+    *row_pointers = rows;
     return 1;
 }
 
-int load_png(FILE *fp, png_bytepp *rows, image_info_t *image_info) 
+int load_png(FILE *fp, png_bytepp *row_pointers, image_info_t *image_info) 
 {
     // Check for png header
     if (!is_png_file(fp)) {
@@ -151,7 +160,7 @@ int load_png(FILE *fp, png_bytepp *rows, image_info_t *image_info)
     png_read_info(png_ptr, info_ptr);
 
     // Read image
-    if (!read_png(png_ptr, info_ptr, rows, image_info)) {
+    if (!read_png(png_ptr, info_ptr, row_pointers, image_info)) {
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return 0;
     }
@@ -209,14 +218,13 @@ void read_card(image_info_t *image_info, png_bytepp *rows)
     fclose(fp);
 }
 
-void destroy_card(png_bytepp rows, image_info_t *image_info)
+void destroy_card(png_bytepp row_pointers, image_info_t *image_info)
 {
-    for (int i = 0; i < image_info->height; ++i) {
-        png_bytep row = rows[i];
-        free(row);
-    }
+    // Free the image data
+    free(row_pointers[0]);
 
-    free(rows);
+    // Free the image row pointers
+    free(row_pointers);
 }
 
 void copy_cards_to_output(int cards, char **paths, rgba32_t *output, int output_width) {
