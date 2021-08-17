@@ -98,11 +98,23 @@ int read_png(png_structp png_ptr, png_infop info_ptr, png_bytepp *row_pointers, 
     image_info->stride = png_get_rowbytes(png_ptr, info_ptr);
 
     // Allocate a buffer to store the raw image
-    png_bytep data_buffer = (png_bytep) malloc(image_info->height * image_info->stride * sizeof(png_byte));
+    int size = image_info->height * image_info->stride * sizeof(png_byte);
+    png_bytep data_buffer = (png_bytep) malloc(size);
+
+    if (!data_buffer) {
+        fprintf(stderr, "Out of memory: Couldn't allocate image data (%d bytes)\n", size);
+        exit(OUT_OF_RAM);
+    }
 
     // Allocate a second buffer to store the pointers to the start of each row.
     // This is required by libpng png_read_image function.
-    png_bytepp rows = (png_bytepp) malloc(image_info->height * sizeof(png_bytep));
+    size = image_info->height * sizeof(png_bytep);
+    png_bytepp rows = (png_bytepp) malloc(size);
+
+    if (!rows) {
+        fprintf(stderr, "Out of memory: Couldn't allocate row pointers buffer (%d bytes)\n", size);
+        exit(OUT_OF_RAM);
+    }
 
     // Set each row pointer to the first byte of each row
     for (png_uint_32 row = 0; row < image_info->height; ++row) {
