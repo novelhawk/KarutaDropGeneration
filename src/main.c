@@ -270,10 +270,10 @@ void copy_cards_to_output(int cards, char **paths, rgba32_t *output, int output_
         output += SOURCE_CARD_WIDTH;
 
         // Free the image data
-        free(row_pointers[0]);
+        free(card_rows[0]);
 
         // Free the image row pointers
-        free(row_pointers);
+        free(card_rows);
     }
 }
 
